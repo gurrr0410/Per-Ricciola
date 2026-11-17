@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Per Ricciola ❤️</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: black;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            height: 100dvh;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        #main-text {
+            position: relative;
+            z-index: 2;
+            margin-top: auto;
+            margin-bottom: 45px;
+            color: #ff1a1a;
+            font-size: clamp(1.8rem, 7vw, 3.2rem);
+            font-weight: 900;
+            text-align: center;
+            letter-spacing: 2px;
+            text-shadow: 0 0 15px rgba(255, 0, 0, 0.8), 0 0 30px rgba(255, 0, 0, 0.5);
+            opacity: 0;
+            transform: scale(0.8);
+            transition: opacity 1.5s ease, transform 1.5s ease;
+            padding: 0 15px;
+        }
+        #main-text.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="heartCanvas"></canvas>
+    <div id="main-text">TI AMO RICCIOLA</div>
+
+    <script>
+        const canvas = document.getElementById('heartCanvas');
+        const ctx = canvas.getContext('2d');
+        const mainText = document.getElementById('main-text');
+
+        let width, height, scale;
+
+        const lovePhrases = [
+            "ti amo", "I love you", "je t'aime", "te amo", "ich liebe dich",
+            "愛してる", "사랑해", "я тебя люблю", "أحبك", "eu te amo",
+            "ik hou van jou", "jag älskar dig", "σε αγαπώ", "te iubesc",
+            "kochaj mnie", "seni seviyorum", "मैं तुमसे प्यार करता हूँ",
+            "t'estimo", "ti voglio bene", "miluji tě", "szeretlek"
+        ];
+
+        let backgroundTexts = [];
+
+        function init() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            // Adatta la dimensione del cuore allo schermo del telefono
+            scale = Math.min(width, height) / 420; 
+            generateBackgroundTexts();
+        }
+
+        function generateBackgroundTexts() {
+            backgroundTexts = [];
+            const count = 65; // Numero di scritte piccole intorno
+            const centerX = width / 2;
+            const centerY = height / 2 - (30 * scale);
+
+            for (let i = 0; i < count; i++) {
+                let x, y, distFromCenter;
+                // Evita di sovrapporre troppo le scritte al centro del cuore o al testo in basso
+                do {
+                    x = Math.random() * (width - 60) + 30;
+                    y = Math.random() * (height - 130) + 20;
+                    distFromCenter = Math.hypot(x - centerX, y - centerY);
+                } while (distFromCenter < 155 * scale);
+
+                backgroundTexts.push({
+                    text: lovePhrases[Math.floor(Math.random() * lovePhrases.length)],
+                    x: x,
+                    y: y,
+                    size: Math.floor(Math.random() * 6) + 10, // 10px - 15px
+                    alpha: Math.random() * 0.45 + 0.15,
+                    angle: (Math.random() - 0.5) * 0.4
+                });
+            }
+        }
+
+        function drawBackgroundTexts() {
+            backgroundTexts.forEach(item => {
+                ctx.save();
+                ctx.translate(item.x, item.y);
+                ctx.rotate(item.angle);
+                ctx.font = `${item.size}px sans-serif`;
+                ctx.fillStyle = `rgba(255, 80, 100, ${item.alpha})`;
+                ctx.textAlign = "center";
+                ctx.fillText(item.text, 0, 0);
+                ctx.restore();
+            });
+        }
+
+        let i = 0;
+        const totalSteps = 200;
+
+        function animate() {
+            if (i === 0) {
+                ctx.fillStyle = "black";
+                ctx.fillRect(0, 0, width, height);
+                drawBackgroundTexts();
+            }
+
+            if (i < totalSteps) {
+                // Disegna 2 linee per frame per una velocità fluida
+                for (let step = 0; step < 2 && i < totalSteps; step++, i++) {
+                    const angle = (i * 1.8) * (Math.PI / 180);
+                    
+                    // La tua formula matematica originale adattata allo schermo
+                    const rawX = 160 * Math.pow(Math.sin(angle), 3);
+                    const rawY = 130 * Math.cos(angle) - 50 * Math.cos(2 * angle) - 20 * Math.cos(3 * angle) - 10 * Math.cos(4 * angle);
+
+                    const centerX = width / 2;
+                    const centerY = height / 2 - (40 * scale);
+
+                    // Nota: su Canvas l'asse Y è invertito rispetto a Turtle
+                    const startX = centerX;
+                    const startY = centerY - (-100 * scale);
+                    const endX = centerX + (rawX * scale);
+                    const endY = centerY - (rawY * scale);
+
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(endX, endY);
+                    ctx.strokeStyle = "red";
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                }
+                requestAnimationFrame(animate);
+            } else {
+                // Quando il cuore è finito, fa comparire "TI AMO RICCIOLA"
+                mainText.classList.add('visible');
+            }
+        }
+
+        // Tocca lo schermo per far ripartire l'animazione
+        window.addEventListener('click', () => {
+            i = 0;
+            mainText.classList.remove('visible');
+            generateBackgroundTexts();
+            animate();
+        });
+
+        window.addEventListener('resize', () => {
+            init();
+            i = 0;
+            mainText.classList.remove('visible');
+        });
+
+        init();
+        animate();
+    </script>
+</body>
+</html>
